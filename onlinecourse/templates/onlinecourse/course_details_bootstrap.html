@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ course.name }} - Course Details</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="{% url 'onlinecourse:index' %}">Online Course App</a>
+            </div>
+            <ul class="nav navbar-nav navbar-right">
+                {% if user.is_authenticated %}
+                <li>
+                    <a class="btn btn-link" href="#">{{ user.first_name }}({{ user.username }})</a>
+                    <a class="btn btn-link" href="{% url 'onlinecourse:logout' %}">Logout</a>
+                </li>
+                {% else %}
+                <li>
+                    <form class="form-inline" action="{% url 'onlinecourse:login' %}" method="post">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Username" name="username">
+                            <input type="password" class="form-control" placeholder="Password" name="password">
+                            <button class="btn btn-primary" type="submit">Login</button>
+                            <a class="btn btn-link" href="{% url 'onlinecourse:registration' %}">Sign Up</a>
+                        </div>
+                    </form>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container mt-4">
+        <!-- Course Header -->
+        <div class="jumbotron">
+            <h1 class="display-4">{{ course.name }}</h1>
+            <p class="lead">{{ course.description }}</p>
+        </div>
+
+        <!-- Lessons and Exam Section -->
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Lessons & Exam</h3>
+                
+                <!-- Exam Form -->
+                <form action="{% url 'onlinecourse:submit' course.id %}" method="post">
+                    {% csrf_token %}
+
+                    <!-- Accordion for Lessons -->
+                    <div id="accordion" class="mb-4">
+                        {% for lesson in course.lesson_set.all %}
+                        <div class="card mb-2">
+                            <div class="card-header" id="heading{{ lesson.id }}">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse{{ lesson.id }}" aria-expanded="true" aria-controls="collapse{{ lesson.id }}">
+                                        Lesson {{ lesson.order }}: {{ lesson.title }}
+                                    </button>
+                                </h5>
+                            </div>
+
+                            <div id="collapse{{ lesson.id }}" class="collapse show" aria-labelledby="heading{{ lesson.id }}">
+                                <div class="card-body">
+                                    <p>{{ lesson.content }}</p>
+
+                                    <!-- Lesson Questions -->
+                                    {% if lesson.question_set.all %}
+                                        <hr>
+                                        <h6 class="text-primary">Lesson Questions:</h6>
+                                        {% for question in lesson.question_set.all %}
+                                        <div class="card my-3">
+                                            <div class="card-header font-weight-bold">
+                                                {{ question.question_text }} (Grade: {{ question.grade }})
+                                            </div>
+                                            <div class="card-body">
+                                                {% for choice in question.choice_set.all %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="choice_{{ choice.id }}" id="choice_{{ choice.id }}" value="{{ choice.id }}">
+                                                    <label class="form-check-label" for="choice_{{ choice.id }}">
+                                                        {{ choice.choice_text }}
+                                                    </label>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="alert alert-warning">No lessons available for this course.</p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Submit Exam Button -->
+                    {% if user.is_authenticated %}
+                    <div class="text-center mb-5">
+                        <button type="submit" class="btn btn-success btn-lg">Submit Exam</button>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info text-center mb-5">
+                        Please log in to take and submit the exam.
+                    </div>
+                    {% endif %}
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
